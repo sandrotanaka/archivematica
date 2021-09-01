@@ -18,7 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with Archivematica.  If not, see <http://www.gnu.org/licenses/>.
 
-import six.moves.cPickle
 import getpass
 import optparse
 import os
@@ -33,6 +32,7 @@ from custom_handlers import get_script_logger
 
 # externals
 import requests
+import six
 
 import django
 
@@ -118,7 +118,10 @@ def start(job, data):
     # The target columns contents a serialized Python dictionary
     # - target is the permalink string
     try:
-        target = six.moves.cPickle.loads(access.target.encode("utf8"))
+        access_target = access.target
+        if isinstance(access_target, six.text_type):
+            access_target = access_target.encode("utf8")
+        target = six.moves.cPickle.loads(access_target)
         log("Target: %s" % (target["target"]))
     except:
         return error(job, "No target was selected")
