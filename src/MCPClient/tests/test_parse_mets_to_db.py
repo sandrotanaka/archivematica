@@ -7,7 +7,7 @@ from django.test import TestCase
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 import parse_mets_to_db
 
-from job import Job
+from client.job import Job
 
 import fpr
 from main import models

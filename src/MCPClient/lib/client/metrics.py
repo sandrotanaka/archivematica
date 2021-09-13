@@ -1,17 +1,28 @@
 """
 Exposes various metrics via Prometheus.
 """
-from __future__ import absolute_import, unicode_literals
-
 import six.moves.configparser
 import datetime
 import functools
+import tempfile
 import os
+
+import django
+
+django.setup()
 
 from django.conf import settings
 from django.db.models import Sum
 from django.utils import timezone
-from prometheus_client import Counter, Gauge, Histogram, Info, start_http_server
+from prometheus_client import (
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    Info,
+    multiprocess,
+    start_http_server,
+)
 
 from fpr.models import FormatVersion
 from main.models import File, FileFormatVersion, Transfer
@@ -52,10 +63,6 @@ task_execution_time_histogram = Histogram(
     "Histogram of worker task execution times in seconds, labeled by script",
     ["script_name"],
     buckets=TASK_DURATION_BUCKETS,
-)
-waiting_for_gearman_time_counter = Counter(
-    "mcpclient_gearman_sleep_time_seconds",
-    "Total worker sleep after gearman error times in seconds",
 )
 
 transfer_started_counter = Counter(
@@ -174,11 +181,18 @@ aip_original_file_timestamps_histogram = Histogram(
 archivematica_info = Info("archivematica_version", "Archivematica version info")
 environment_info = Info("environment_variables", "Environment Variables")
 
+# TODO: remove global
+prometheus_tmp_dir = None
+
 
 # There's no central place to pull these constants from currently
 FILE_GROUPS = ("original", "derivative", "metadata")
 PACKAGE_FAILURE_TYPES = ("fail", "reject")
 TRANSFER_TYPES = ("Standard", "Dataverse", "Dspace", "TRIM", "Maildir", "Unknown")
+
+
+# TODO: remove global
+prometheus_tmp_dir = None
 
 
 def skip_if_prometheus_disabled(func):
@@ -231,14 +245,27 @@ def init_counter_labels():
 
 
 @skip_if_prometheus_disabled
+def worker_exit(process_id):
+    multiprocess.mark_process_dead(process_id, path=prometheus_tmp_dir)
+
+
+@skip_if_prometheus_disabled
 def start_prometheus_server():
+    global prometheus_tmp_dir
+    registry = CollectorRegistry()
+    # TODO: this should be cleared on shutdown
+    prometheus_tmp_dir = tempfile.mkdtemp(prefix="prometheus-stats")
+    multiprocess.MultiProcessCollector(registry, path=prometheus_tmp_dir)
+
     init_counter_labels()
 
     archivematica_info.info({"version": get_full_version()})
     environment_info.info(os.environ)
 
     return start_http_server(
-        settings.PROMETHEUS_BIND_PORT, addr=settings.PROMETHEUS_BIND_ADDRESS
+        settings.PROMETHEUS_BIND_PORT,
+        addr=settings.PROMETHEUS_BIND_ADDRESS,
+        registry=registry,
     )
 
 
