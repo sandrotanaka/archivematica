@@ -25,7 +25,6 @@ jobs:
           - "Firefox"
           - "Chrome"
         python_version:
-          - "python2"
           - "python3"
         exclude:
           - tag: "black-box"
