@@ -25,10 +25,10 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # OS dependencies
-# COPY osdeps.py /src/hack/osdeps.py
-COPY src/dashboard/osdeps /src/src/dashboard/osdeps
-COPY src/MCPServer/osdeps /src/src/MCPServer/osdeps
-COPY src/MCPClient/osdeps /src/src/MCPClient/osdeps
+COPY ../hack/osdeps.py /src/hack/osdeps.py
+COPY ../src/dashboard/osdeps /src/src/dashboard/osdeps
+COPY ../src/MCPServer/osdeps /src/src/MCPServer/osdeps
+COPY ../src/MCPClient/osdeps /src/src/MCPClient/osdeps
 RUN set -ex \
 	&& curl -s https://packages.archivematica.org/GPG-KEY-archivematica | apt-key add - \
 	&& add-apt-repository --no-update --yes "deb [arch=amd64] http://packages.archivematica.org/1.13.x/ubuntu-externals bionic main" \
