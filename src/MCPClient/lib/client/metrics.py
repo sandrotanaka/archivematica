@@ -4,8 +4,6 @@ Exposes various metrics via Prometheus.
 import six.moves.configparser
 import datetime
 import functools
-import tempfile
-import os
 
 import django
 
@@ -19,7 +17,6 @@ from prometheus_client import (
     Counter,
     Gauge,
     Histogram,
-    Info,
     multiprocess,
     start_http_server,
 )
@@ -33,7 +30,6 @@ from common_metrics import (
     PROCESSING_TIME_BUCKETS,
     TASK_DURATION_BUCKETS,
 )
-from version import get_full_version
 from six.moves import range
 
 
@@ -46,6 +42,7 @@ job_processed_timestamp = Gauge(
     "mcpclient_job_success_timestamp",
     "Timestamp of most recent job processed, labeled by script",
     ["script_name"],
+    multiprocess_mode="livesum",
 )
 job_error_counter = Counter(
     "mcpclient_job_error_total",
@@ -56,6 +53,7 @@ job_error_timestamp = Gauge(
     "mcpclient_job_error_timestamp",
     "Timestamp of most recent job failure, labeled by script",
     ["script_name"],
+    multiprocess_mode="livesum",
 )
 
 task_execution_time_histogram = Histogram(
@@ -74,6 +72,7 @@ transfer_started_timestamp = Gauge(
     "mcpclient_transfer_started_timestamp",
     "Timestamp of most recent transfer started, by transfer type",
     ["transfer_type"],
+    multiprocess_mode="livesum",
 )
 transfer_completed_counter = Counter(
     "mcpclient_transfer_completed_total",
@@ -84,6 +83,7 @@ transfer_completed_timestamp = Gauge(
     "mcpclient_transfer_completed_timestamp",
     "Timestamp of most recent transfer completed, by transfer type",
     ["transfer_type"],
+    multiprocess_mode="livesum",
 )
 transfer_error_counter = Counter(
     "mcpclient_transfer_error_total",
@@ -94,6 +94,7 @@ transfer_error_timestamp = Gauge(
     "mcpclient_transfer_error_timestamp",
     "Timestamp of most recent transfer failure, by transfer type, error type",
     ["transfer_type", "failure_type"],
+    multiprocess_mode="livesum",
 )
 transfer_files_histogram = Histogram(
     "mcpclient_transfer_files",
@@ -110,7 +111,9 @@ transfer_size_histogram = Histogram(
 
 sip_started_counter = Counter("mcpclient_sip_started_total", "Number of SIPs started")
 sip_started_timestamp = Gauge(
-    "mcpclient_sip_started_timestamp", "Timestamp of most recent SIP started"
+    "mcpclient_sip_started_timestamp",
+    "Timestamp of most recent SIP started",
+    multiprocess_mode="livesum",
 )
 sip_error_counter = Counter(
     "mcpclient_sip_error_total",
@@ -121,15 +124,20 @@ sip_error_timestamp = Gauge(
     "mcpclient_sip_error_timestamp",
     "Timestamp of most recent SIP failure, by error type",
     ["failure_type"],
+    multiprocess_mode="livesum",
 )
 
 aips_stored_counter = Counter("mcpclient_aips_stored_total", "Number of AIPs stored")
 dips_stored_counter = Counter("mcpclient_dips_stored_total", "Number of DIPs stored")
 aips_stored_timestamp = Gauge(
-    "mcpclient_aips_stored_timestamp", "Timestamp of most recent AIP stored"
+    "mcpclient_aips_stored_timestamp",
+    "Timestamp of most recent AIP stored",
+    multiprocess_mode="livesum",
 )
 dips_stored_timestamp = Gauge(
-    "mcpclient_dips_stored_timestamp", "Timestamp of most recent DIP stored"
+    "mcpclient_dips_stored_timestamp",
+    "Timestamp of most recent DIP stored",
+    multiprocess_mode="livesum",
 )
 aip_processing_time_histogram = Histogram(
     "mcpclient_aip_processing_seconds",
@@ -178,21 +186,11 @@ aip_original_file_timestamps_histogram = Histogram(
     + [float("inf")],
 )
 
-archivematica_info = Info("archivematica_version", "Archivematica version info")
-environment_info = Info("environment_variables", "Environment Variables")
-
-# TODO: remove global
-prometheus_tmp_dir = None
-
 
 # There's no central place to pull these constants from currently
 FILE_GROUPS = ("original", "derivative", "metadata")
 PACKAGE_FAILURE_TYPES = ("fail", "reject")
 TRANSFER_TYPES = ("Standard", "Dataverse", "Dspace", "TRIM", "Maildir", "Unknown")
-
-
-# TODO: remove global
-prometheus_tmp_dir = None
 
 
 def skip_if_prometheus_disabled(func):
@@ -246,21 +244,15 @@ def init_counter_labels():
 
 @skip_if_prometheus_disabled
 def worker_exit(process_id):
-    multiprocess.mark_process_dead(process_id, path=prometheus_tmp_dir)
+    multiprocess.mark_process_dead(process_id)
 
 
 @skip_if_prometheus_disabled
 def start_prometheus_server():
-    global prometheus_tmp_dir
     registry = CollectorRegistry()
-    # TODO: this should be cleared on shutdown
-    prometheus_tmp_dir = tempfile.mkdtemp(prefix="prometheus-stats")
-    multiprocess.MultiProcessCollector(registry, path=prometheus_tmp_dir)
+    multiprocess.MultiProcessCollector(registry)
 
     init_counter_labels()
-
-    archivematica_info.info({"version": get_full_version()})
-    environment_info.info(os.environ)
 
     return start_http_server(
         settings.PROMETHEUS_BIND_PORT,

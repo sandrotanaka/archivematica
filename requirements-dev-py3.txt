@@ -59,7 +59,7 @@ opf-fido==1.4.1           # via -r requirements-py3.txt
 packaging==20.9           # via pytest, tox
 pip-tools==5.4.0          # via -r requirements-py3.txt
 pluggy==0.13.1            # via pytest, tox
-prometheus-client==0.7.1  # via -r requirements-py3.txt, django-prometheus
+prometheus-client==0.11.0  # via -r requirements-py3.txt, django-prometheus
 py==1.10.0                # via pytest, tox
 pyasn1-modules==0.2.8     # via -r requirements-py3.txt, python-ldap
 pyasn1==0.4.8             # via -r requirements-py3.txt, ndg-httpsclient, pyasn1-modules, python-ldap

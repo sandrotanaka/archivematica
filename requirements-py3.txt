@@ -47,7 +47,7 @@ ndg-httpsclient==0.5.1    # via -r requirements.in
 olefile==0.46             # via opf-fido
 opf-fido==1.4.1           # via -r requirements.in
 pip-tools==5.4.0          # via -r requirements.in
-prometheus-client==0.7.1  # via -r requirements.in, django-prometheus
+prometheus-client==0.11.0  # via -r requirements.in, django-prometheus
 pyasn1-modules==0.2.8     # via python-ldap
 pyasn1==0.4.8             # via -r requirements.in, ndg-httpsclient, pyasn1-modules, python-ldap
 pycparser==2.20           # via cffi

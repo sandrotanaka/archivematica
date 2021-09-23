@@ -34,7 +34,7 @@ pathlib2==2.3.4 ; python_version < '3'
 pip~=20.3 ; python_version < '3'
 pip~=21.1 ; python_version >= '3'
 pip-tools==5.4.0
-prometheus_client==0.7.1
+prometheus_client==0.11.0
 pyasn1
 pyopenssl
 python-dateutil==2.6.0

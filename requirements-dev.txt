@@ -68,7 +68,7 @@ packaging==20.9           # via pytest, tox
 pathlib2==2.3.4 ; python_version < "3"  # via -r requirements.txt, importlib-metadata, importlib-resources, pytest, pytest-django, virtualenv
 pip-tools==5.4.0          # via -r requirements.txt
 pluggy==0.13.1            # via pytest, tox
-prometheus-client==0.7.1  # via -r requirements.txt, django-prometheus
+prometheus-client==0.11.0  # via -r requirements.txt, django-prometheus
 py==1.10.0                # via pytest, tox
 pyasn1-modules==0.2.8     # via -r requirements.txt, python-ldap
 pyasn1==0.4.8             # via -r requirements.txt, ndg-httpsclient, pyasn1-modules, python-ldap
